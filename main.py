@@ -50,7 +50,13 @@ async def waf_entry_point(request: Request, path: str):
         log_event(req_id, client_ip, "BLOCKED", "IP_Blacklist", "Truy cập từ IP Blacklist", level="warning")
         return block_page("IP của bạn đã bị khóa!", 403)
 
-    if not check_rate_limit(client_ip):
+    user_key = None
+
+    # ví dụ đơn giản: nếu request login có query username
+    if request.url.path.startswith("/login"):
+        user_key = request.query_params.get("username")
+
+    if not check_rate_limit(client_ip, path=request.url.path, user_key=user_key):
         log_event(req_id, client_ip, "BLOCKED", "Rate_Limit", "Vượt quá giới hạn truy cập", level="warning")
         return block_page("Vui lòng truy cập chậm lại!", 429)
 
