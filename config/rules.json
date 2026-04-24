@@ -1,0 +1,24 @@
+{
+    "global_rules": {
+        "Path_Traversal": "(\\.\\./\\.\\./|/etc/passwd)",
+        "XSS": "(<script|javascript:|onerror\\s*=|onload\\s*=)",
+        "SQLi": "(union\\s+select|or\\s+1=1|drop\\s+table|--)",
+        "SSTI": "(\\{\\{.*\\}\\}|\\$\\{.*\\})",
+        "Header_Injection": "(%0d%0a|\\r\\n)",
+        "Dangerous_Filename": "(\\.php|\\.jsp|\\.aspx|\\.exe|\\.sh|\\.bat)",
+        "Suspicious_JSON_Key": "(\\$where|\\$ne|\\$gt|\\$regex)"
+    },
+    "route_rules": {
+        "/search": {
+            "GET": {
+                "XSS": "(<script>|javascript:|onerror=|onload=)"
+            }
+        },
+        "/login": {
+            "POST": {
+                "SQLi": "(union.*select|drop\\s+table|--\\s*$|' or '1'='1)"
+            }
+        }
+    },
+    "disabled_rules": []
+}

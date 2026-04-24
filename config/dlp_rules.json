@@ -1,0 +1,10 @@
+{
+    "fatal_leaks": {
+        "Stack_Trace": "(?i)(Traceback \\(most recent call last\\):|java\\.lang\\.|syntax error in SQL)",
+        "Private_Key": "(?i)(-----BEGIN (RSA|OPENSSH) PRIVATE KEY-----)",
+        "Internal_Paths": "(?i)(/var/www/html|C:\\\\xampp\\\\htdocs)"
+    },
+    "masking": {
+        "Credit_Card": "\\b(?:\\d[ -]*?){13,16}\\b"
+    }
+}

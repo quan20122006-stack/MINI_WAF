@@ -1,0 +1,36 @@
+2026-03-18 22:51:51 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:52 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:53 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:53 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:54 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:54 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:55 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:55 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:56 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:51:58 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 22:52:05 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:22:58 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:23:04 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:23:05 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:23:07 | IP: 127.0.0.1 | H�nDh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:23:08 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:28:03 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:34:31 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:34:50 | IP: 127.0.0.1 | H�nh \u0111\u1ed9ng: B\u1eca CH\u1eb6N - V\u01b0\u1ee3t qu� Rate Limit (Spam/Brute-force)
+2026-03-18 23:35:18 | IP: 127.0.0.1 | Hành động: BỊ CHẶN - Vượt quá Rate Limit (Spam/Brute-force)
+2026-03-19 23:28:54 | IP: 127.0.0.1 | Hành động: BỊ CHẶN - Vượt quá Rate Limit (Spam/Brute-force)
+2026-03-19 23:58:14 | IP: 127.0.0.1 | Hành động: PHÁT HIỆN TẤN CÔNG (SQLi) TRONG BODY
+{"timestamp": "2026-03-25 14:29:17", "level": "ERROR", "client_ip": "127.0.0.1", "message": "DLP BLOCK - Ngăn chặn lộ lọt dữ liệu: Internal_Paths"}
+{"timestamp": "2026-03-25 17:26:16", "level": "ERROR", "client_ip": "127.0.0.1", "message": "DLP BLOCK - Ngăn chặn lộ lọt dữ liệu: Internal_Paths"}
+{"timestamp": "2026-03-25 17:43:11", "request_id": "1721fb95-2061-458f-8a2a-6e19b041e346", "action": "BLOCKED", "rule_hit": "Path_Traversal", "upstream_status": 0, "level": "WARNING", "client_ip": "127.0.0.1", "message": "Phát hiện mã độc trên URL"}
+{"timestamp": "2026-03-26 21:34:38", "request_id": "01732ead-c27a-4edc-8257-9ea7295cd924", "action": "PASSED", "rule_hit": "None", "upstream_status": 502, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /admin/api/v1/status"}
+{"timestamp": "2026-03-26 21:34:58", "request_id": "12f0c39e-c1c2-4ba6-a777-281e79ccbeb2", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /admin/api/v1/status"}
+{"timestamp": "2026-03-26 21:40:03", "request_id": "d335c9aa-70d9-4533-ae0f-2e763d937dfe", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /admin/api/v1/status"}
+{"timestamp": "2026-03-26 21:40:09", "request_id": "0b25621e-5da0-4d77-acb6-c58a56b29160", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /admin/api/v1/status"}
+{"timestamp": "2026-03-26 22:13:01", "request_id": "dfe1f05e-1347-4764-acb7-b2ff31739099", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /admin/api/v1/status"}
+{"timestamp": "2026-03-26 22:13:46", "request_id": "ad873d07-e1b9-4016-a09e-fe293d6b398f", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /admin/api/v1/status"}
+{"timestamp": "2026-03-28 22:19:37", "request_id": "b40dc20c-bb75-437f-908c-8f4b50462467", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /api/test"}
+{"timestamp": "2026-03-28 22:29:51", "request_id": "460793e8-7f77-4fc4-b6eb-39baefff01e3", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /api/test"}
+{"timestamp": "2026-03-30 14:13:09", "request_id": "c71dfd03-3461-4953-89de-0cd4be3d9cfd", "action": "PASSED", "rule_hit": "None", "upstream_status": 200, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /"}
+{"timestamp": "2026-03-30 14:32:57", "request_id": "5617e56c-659a-4536-b47e-57ea02888f53", "action": "PASSED", "rule_hit": "None", "upstream_status": 200, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /"}
+{"timestamp": "2026-03-30 14:32:57", "request_id": "20dfacc2-5ff6-4f78-8ab3-ac77dab14ca6", "action": "PASSED", "rule_hit": "None", "upstream_status": 404, "level": "INFO", "client_ip": "127.0.0.1", "message": "Truy cập thành công /favicon.ico"}

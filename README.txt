@@ -1,0 +1,2 @@
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "//CN=localhost"
+Lệnh này tạo ra một bộ khóa mã hóa RSA 2048-bit, có giá trị trong 365 ngày, không cài mật khẩu (-nodes), và gán tên miền là localhost.

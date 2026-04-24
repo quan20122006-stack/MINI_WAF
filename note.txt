@@ -1,0 +1,193 @@
+1) MVP — chức năng cốt lõi (phải có để gọi là WAF)
+
+Reverse-proxy / Interceptor HTTP
+
+Nhận tất cả request trước backend, có thể forward hoặc block.
+
+Hỗ trợ HTTP/1.1 và cơ bản HTTP/2 (tuỳ scope).
+
+Rule engine cơ bản
+
+So khớp chuỗi & regex trên: URL, headers, params, body.
+
+Quy tắc mẫu (signature-based): XSS, SQLi, path traversal, command injection.
+
+Block / Allow / Log action
+
+Khi rule match → trả 403 (hoặc tùy chỉnh).
+
+Nếu sạch → forward và trả response từ backend.
+
+Logging cơ bản
+
+Ghi: timestamp, source IP, method, URL, matched rule id, payload excerpt, action.
+
+Lưu file log hoặc gửi tới syslog/STDOUT.
+
+Config file / Rules file
+
+Định nghĩa rules bằng JSON/YAML/plaintext để dễ chỉnh sửa (không hardcode).
+
+Simple rate limiting
+
+Limit theo IP (requests / minute).
+
+Block tạm thời khi vượt ngưỡng.
+
+Whitelist / Blacklist IP
+
+Danh sách IP được phép / chặn.
+
+Basic reverse proxy forwarding
+
+Forward request đến backend (preserve headers, cookies).
+
+2) Tính năng “nice-to-have” (giai đoạn 2)
+
+Support cho HTTPS (TLS termination)
+
+Terminate TLS ở WAF, backend có thể chạy HTTP nội bộ.
+
+Custom response page
+
+Trang báo blocked (mã lỗi + lý do rule).
+
+Admin API
+
+Thêm/xoá rule, bật/tắt rule, xem logs (REST API).
+
+Dashboard nhẹ
+
+Hiển thị số click, top IP, top rules matched (simple web UI).
+
+Health check / Metrics
+
+Endpoints health (/healthz) và metrics (Prometheus-compatible).
+
+Rule priority & chaining
+
+Rule có độ ưu tiên, ability to chain conditions (AND/OR).
+
+Request/Response Inspection
+
+Xem và áp dụng rule cho cả response (ngăn data leak, sensitive data exposure).
+
+Temporary ruleset
+
+Push rule tạm thời khi phát hiện tấn công real-time.
+
+3) Tính năng nâng cao (production-like / lab nâng cao)
+
+Signature DB & updates
+
+Cập nhật signature từ file hoặc nguồn tập trung.
+
+IP Reputation / Threat Intelligence
+
+Block dựa trên danh sách blocklist (abuse IP feeds).
+
+GeoIP-based rules
+
+Chặn/allow theo country.
+
+Rate limiting nâng cao
+
+Throttling theo user-agent, API key, authenticated user id.
+
+Bot / Headless browser detection
+
+Dựa trên heuristics, JS fingerprinting, tốc độ truy vấn.
+
+WAF Bypass detection / Challenge
+
+CAPTCHA hoặc JavaScript challenge cho traffic nghi ngờ.
+
+Session / Token validation plug-ins
+
+Kiểm tra JWT signature / expiry hoặc validate custom tokens.
+
+Anomaly detection / ML
+
+Phát hiện mẫu bất thường (behavior-based).
+
+Request normalization & canonicalization
+
+Decode URL-encoding, Unicode normalization, remove nulls — để tránh evasion.
+
+Automatic false-positive management
+
+Tính năng tạm allow nếu nhiều false positives, hoặc báo admin.
+
+High-performance storage for rules
+
+Redis / in-memory for fast lookups; persistent DB cho audit.
+
+Distributed deployment
+
+Sticky sessions? Use shared config store (etcd/consul/S3).
+
+Audit & compliance
+
+Log tamper-proof, export báo cáo.
+
+Integration với SIEM / ELK
+
+Gửi logs/alerts cho Elastic, Splunk, etc.
+
+4) Security / Operational features (quan trọng, thường quên)
+
+Secure config management
+
+Rule repository có kiểm soát version (git), signed configs.
+
+Admin authentication & RBAC
+
+Ai được phép thay rule, xem logs.
+
+Rate-limit rules on admin APIs
+
+Ngăn brute-force cấu hình.
+
+Fail-open vs Fail-closed policy
+
+Cấu hình mặc định khi WAF lỗi: forward (fail-open) hoặc block all (fail-closed). Trong lab, dùng fail-open.
+
+Tamper detection on logs
+
+HMAC sign logs hoặc gửi tới remote immutable store.
+
+Privacy
+
+Redact sensitive fields (passwords, PII) trước khi ghi log.
+
+5) UX / Developer features
+
+Dry-run mode
+
+Rule only logging (alert-only) để tune trước khi block.
+
+Rule testing tool
+
+UI/CLI để simulate request và xem rule match.
+
+Rule templates
+
+Prebuilt signatures cho XSS, SQLi, LFI, RFI.
+
+Documentation + examples
+
+Rõ ràng cách thêm rule, regex examples.
+
+6) Kiến trúc & triển khai — gợi ý công nghệ (mini lab)
+
+Language: Node.js (Express + http-proxy) hoặc Python (FastAPI + httpx/uvicorn + async).
+
+DB / Cache: Redis cho rate-limit & fast lookup; PostgreSQL/MySQL cho audit.
+
+Config store: YAML/JSON + git for versioning.
+
+Logging: JSON logs → stdout → file / ELK.
+
+Metrics: Prometheus metrics endpoint.
+
+Deployment: Docker container → reverse proxy (nginx) hoặc chạy standalone.
