@@ -42,7 +42,14 @@ async def forward_request(request: Request, path = str ,client_ip = str )-> Resp
                     #Goi may quet DLP 
                     is_blocked , result = inspect_and_mask(body_str)
                     if is_blocked:
-                        log_alert(client_ip, f"DLP BLOCK - Ngăn chặn lộ lọt dữ liệu: {result}", "error")
+                        log_alert(
+                            request_id="response-dlp",
+                            client_ip=client_ip,
+                            rule_hit="DLP_FATAL_LEAK",
+                            message="Phát hiện rò rỉ dữ liệu nhạy cảm từ backend response",
+                            severity="critical",
+                            path=path,
+                        )
                         return HTMLResponse(
                             content="<h1>[WAF] Lỗi 500: Server gặp sự cố (Dữ liệu nhạy cảm đã bị chặn rò rỉ)!</h1>",
                             status_code=500

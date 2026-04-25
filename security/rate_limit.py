@@ -38,7 +38,7 @@ def _consume_token(key: str, capacity: int, refill_rate: float) -> bool:
     bucket = bucket_store[key]
 
     #refill token 
-    elapsed = now - bucket["last_reffil"] # Tính khoảng thời gian đã trôi qua kể từ lần cuối bucket được cập nhật
+    elapsed = now - bucket["last_refill"] # Tính khoảng thời gian đã trôi qua kể từ lần cuối bucket được cập nhật
     bucket["tokens"] = min(capacity, bucket["tokens"] + elapsed * refill_rate)
     bucket["last_refill"] = now
 

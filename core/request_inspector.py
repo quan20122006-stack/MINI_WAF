@@ -2,7 +2,7 @@ import json
 from fastapi import Request
 
 SUSPICIOUS_HEADER = {
-    "user_agent", #gia mao client
+    "user-agent", #gia mao client
     "referer", #gia mao nguon truy cap 
     "x-forwarded-for", #nguon truy cap
     "x-original-url", # bypass routing
@@ -39,7 +39,7 @@ async def collect_request_surfaces(request: Request) -> dict:
             surfaces["anomalies"].append("Missing_Content_Type_With_Body")
     
     if "multipart/form-data" in content_type and "boundary=" not in content_type:
-        surfaces["cookies"].append("Multipart_Missing_boundary")
+        surfaces["anomalies"].append("Multipart_Missing_boundary")
 
     #4, Body parsing
     try: 
