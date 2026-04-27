@@ -1,13 +1,15 @@
 import uvicorn
 import uuid
 import time
+import asyncio
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from utils.fetch_threat_ips import fetch_and_block
 
 from core.rules import WAF_STATE
 from admin.api import admin_router
-from security.ip_filter import get_real_ip, is_ip_blocked
+from security.ip_filter import get_real_ip , is_ip_blocked
 from security.rate_limit import check_rate_limit
 from core.analyzer import analyze_payload
 from core.proxy import forward_request
@@ -29,6 +31,11 @@ app.include_router(admin_router)
 @app.on_event("startup")
 async def startup():
     start_background_tasks()
+
+async def threat_updater():
+    while True:
+        fetch_and_block()
+        await asyncio.sleep(1800)  # 30 phút
 
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])

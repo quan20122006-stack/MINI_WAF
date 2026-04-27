@@ -44,7 +44,7 @@ def _consume_token(key: str, capacity: int, refill_rate: float) -> bool:
 
     #Khoi tao lan dau cho muot hon
     if bucket["tokens"] == 0 and elapsed < 0.01:
-        bucket["tokens"] == capacity
+        bucket["tokens"] = capacity
     
     #tieu token
     if bucket["tokens"] >= 1: #Neu bucket con it nhat 1 token , request nay duoc di qua 

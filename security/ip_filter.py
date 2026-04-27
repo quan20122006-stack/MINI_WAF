@@ -1,44 +1,67 @@
 from fastapi import Request
+from pathlib import Path
+import json
 
-# Cấu hình danh sách IP (Sau này có thể chuyển vào config.json hoặc Database)
-TRUSTED_PROXIES = {"10.0.0.254", "192.168.1.100"} 
+
+TRUSTED_PROXIES = {"10.0.0.254", "192.168.1.100"}
 BLACKLIST_IPS = {"192.168.1.50", "10.0.0.5"}
 
+BANNED_FILE = Path("config/banned_ips.json")
+
+WAF_STATE = {
+    "banned_ips": set()
+}
+
+
 def get_real_ip(request: Request) -> str:
-    """
-    Lấy IP thật của người dùng, có cơ chế chống giả mạo IP (IP Spoofing)
-    """
     physical_ip = request.client.host
-    
-    # Chỉ tin tưởng Header X-Forwarded-For nếu IP kết nối vật lý là một Proxy quen thuộc
+
     if physical_ip in TRUSTED_PROXIES:
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
-            # Lấy IP đầu tiên trong chuỗi (IP của người dùng gốc)
             return forwarded_for.split(",")[0].strip()
-            
+
     return physical_ip
 
-def is_ip_blocked(ip: str) -> bool:
-    """
-    Kiểm tra xem IP có nằm trong danh sách đen không.
-    """
-    return ip in BLACKLIST_IPS
 
-RUNTIME_BLACKLIST_IPS = set()
+def load_banned_ips():
+    if BANNED_FILE.exists():
+        with open(BANNED_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        WAF_STATE["banned_ips"] = set(data.get("blocked", []))
+    else:
+        WAF_STATE["banned_ips"] = set()
+        _save_banned_ips()
+
+
+def _save_banned_ips():
+    BANNED_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    data = {
+        "blocked": sorted(WAF_STATE["banned_ips"])
+    }
+
+    with open(BANNED_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
 
 
 def ban_ip(ip: str):
-    RUNTIME_BLACKLIST_IPS.add(ip)
+    WAF_STATE["banned_ips"].add(ip)
+    _save_banned_ips()
 
 
 def unban_ip(ip: str):
-    RUNTIME_BLACKLIST_IPS.discard(ip)
+    WAF_STATE["banned_ips"].discard(ip)
+    _save_banned_ips()
 
 
 def list_banned_ips():
-    return sorted(RUNTIME_BLACKLIST_IPS)
+    return sorted(WAF_STATE["banned_ips"])
 
 
 def is_ip_blocked(ip: str) -> bool:
-    return ip in BLACKLIST_IPS or ip in RUNTIME_BLACKLIST_IPS
+    return ip in BLACKLIST_IPS or ip in WAF_STATE["banned_ips"]
+
+
+load_banned_ips()
