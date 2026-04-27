@@ -1,9 +1,9 @@
 import re
 from core.rules import WAF_STATE
 from core.normalizer import normalize_payload
+from typing import Optional
 
-
-def analyze_payload(payload: str, path: str = None, method: str = None) -> str | None:
+def analyze_payload(payload: str, path: str = None, method: str = None) -> Optional[str]:
     if not payload:
         return None
 

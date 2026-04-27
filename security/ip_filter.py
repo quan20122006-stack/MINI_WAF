@@ -24,3 +24,21 @@ def is_ip_blocked(ip: str) -> bool:
     Kiểm tra xem IP có nằm trong danh sách đen không.
     """
     return ip in BLACKLIST_IPS
+
+RUNTIME_BLACKLIST_IPS = set()
+
+
+def ban_ip(ip: str):
+    RUNTIME_BLACKLIST_IPS.add(ip)
+
+
+def unban_ip(ip: str):
+    RUNTIME_BLACKLIST_IPS.discard(ip)
+
+
+def list_banned_ips():
+    return sorted(RUNTIME_BLACKLIST_IPS)
+
+
+def is_ip_blocked(ip: str) -> bool:
+    return ip in BLACKLIST_IPS or ip in RUNTIME_BLACKLIST_IPS

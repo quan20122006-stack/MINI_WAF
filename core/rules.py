@@ -1,11 +1,12 @@
 import json
 import os
+from config.settings import WAF_DRY_RUN_MODE
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_path = os.path.join(base_dir, "config", "rules.json")
 
 WAF_STATE = {
-    "DRY_RUN_MODE": True,
+    "DRY_RUN_MODE": WAF_DRY_RUN_MODE,
     "RULES": {},
     "DISABLED_RULES": []
 }

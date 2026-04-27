@@ -1,0 +1,4 @@
+{"timestamp": "2026-04-27T10:21:29.094568Z", "event_type": "HIGH_BLOCK_RATE", "payload": {"client_ip": "127.0.0.1", "rule_hit": "XSS", "path": "/", "window_seconds": 60, "count": 5}}
+{"timestamp": "2026-04-27T10:21:30.011784Z", "event_type": "RULE_HIT_SPIKE", "payload": {"client_ip": "127.0.0.1", "rule_hit": "XSS", "path": "/", "window_seconds": 60, "count": 5}}
+{"timestamp": "2026-04-27T10:21:31.037676Z", "event_type": "HIGH_BLOCK_RATE", "payload": {"client_ip": "127.0.0.1", "rule_hit": "XSS", "path": "/", "window_seconds": 60, "count": 6}}
+{"timestamp": "2026-04-27T10:21:32.059967Z", "event_type": "RULE_HIT_SPIKE", "payload": {"client_ip": "127.0.0.1", "rule_hit": "XSS", "path": "/", "window_seconds": 60, "count": 6}}

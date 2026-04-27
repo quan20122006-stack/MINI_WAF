@@ -1,220 +1,281 @@
-import os #os dùng để xử lý đường dẫn file/thư mục
 import json
 import time
-import logging
-from logging.handlers import RotatingFileHandler #logging và RotatingFileHandler dùng để ghi log ra file
-from collections import defaultdict, deque
-from datetime import datetime
+import httpx
+import threading
+from collections import defaultdict
+from security.ip_filter import ban_ip, unban_ip, list_banned_ips
+
+from config.settings import (
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID,
+    TELEGRAM_ALERT_ENABLED,
+    TELEGRAM_SUMMARY_ENABLED,
+    TELEGRAM_SUMMARY_INTERVAL,
+)
+SUMMARY_RUNTIME_ENABLED = TELEGRAM_SUMMARY_ENABLED
 
 # =========================
-# PATHS
+# FILE LOGGING
 # =========================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOG_DIR = os.path.join(BASE_DIR, "logs") #tạo đường dẫn tới thư mục logs
-os.makedirs(LOG_DIR, exist_ok=True)
-
-ACCESS_LOG_FILE = os.path.join(LOG_DIR, "waf_access.log") #waf_access.log dành cho request bình thường, ví dụ request được allow.
-SECURITY_LOG_FILE = os.path.join(LOG_DIR, "waf_security.log") #waf_security.log dành cho sự kiện bảo mật, ví dụ detect rule, block, warning, error.
-INCIDENT_LOG_FILE = os.path.join(LOG_DIR, "waf_incidents.log") #dành cho incident/alert, tức là sự kiện đáng chú ý hơn log thường.
-
-# =========================
-# LOGGER SETUP
-# =========================
-def _build_logger(name: str, file_path: str):
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-
-    if not logger.handlers:
-        handler = RotatingFileHandler(
-            file_path,
-            maxBytes=2 * 1024 * 1024,   # 2MB
-            backupCount=3,
-            encoding="utf-8"
-        )
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-
-    return logger
-
-
-access_logger = _build_logger("waf_access", ACCESS_LOG_FILE)
-security_logger = _build_logger("waf_security", SECURITY_LOG_FILE)
-incident_logger = _build_logger("waf_incident", INCIDENT_LOG_FILE)
-
-# =========================
-# ALERT MEMORY
-# =========================
-recent_blocks = deque()
-recent_rule_hits = defaultdict(deque)
-
-BLOCK_ALERT_THRESHOLD = 5
-RULE_ALERT_THRESHOLD = 5
-ALERT_WINDOW_SECONDS = 60
-
-
-def _now_iso(): #Tạo timestamp ISO : 2026-04-26T12:30:45.123456
+def _now_iso():
+    from datetime import datetime
     return datetime.utcnow().isoformat() + "Z"
 
 
-def _cleanup_old_events(queue_obj, now_ts: float):
-    while queue_obj and now_ts - queue_obj[0] > ALERT_WINDOW_SECONDS:
-        queue_obj.popleft()
+def _write_json(file, data):
+    with open(file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(data, ensure_ascii=False) + "\n")
 
 
-def _write_json(logger_obj, payload: dict):
-    logger_obj.info(json.dumps(payload, ensure_ascii=False))
+ACCESS_LOG = "logs/waf_access.log"
+SECURITY_LOG = "logs/waf_security.log"
+INCIDENT_LOG = "logs/waf_incidents.log"
+
+# =========================
+# TELEGRAM
+# =========================
+def send_telegram_alert(text: str):
+    if not TELEGRAM_ALERT_ENABLED:
+        return
+
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("[TELEGRAM] missing config")
+        return
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+    try:
+        with httpx.Client(timeout=5) as client:
+            resp = client.post(url, json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": text,
+            })
+        print("[TELEGRAM]", resp.status_code, resp.text)
+    except Exception as e:
+        print("[TELEGRAM ERROR]", e)
 
 
-def trigger_webhook(event_type: str, payload: dict):
-    """
-    Lab mode: hiện tại ghi ra incident log + print.
-    Sau này có thể thay bằng Telegram / Discord / Slack webhook thật.
-    """
-    incident_record = {
-        "timestamp": _now_iso(),
-        "event_type": event_type,
-        "payload": payload
-    }
-    _write_json(incident_logger, incident_record)
-    print(f"[ALERT] {event_type}: {json.dumps(payload, ensure_ascii=False)}")
+# =========================
+# ANTI-SPAM
+# =========================
+LAST_ALERT_TIME = {}
+ALERT_COOLDOWN = 60  # seconds
 
 
-def maybe_alert_on_block(client_ip: str, rule_hit: str, path: str = None):
-    now_ts = time.time()
+def should_alert(key: str):
+    now = time.time()
+    last = LAST_ALERT_TIME.get(key, 0)
 
-    recent_blocks.append(now_ts)
-    _cleanup_old_events(recent_blocks, now_ts)
+    if now - last < ALERT_COOLDOWN:
+        return False
 
-    if len(recent_blocks) >= BLOCK_ALERT_THRESHOLD:
-        trigger_webhook(
-            "HIGH_BLOCK_RATE",
-            {
-                "client_ip": client_ip,
-                "rule_hit": rule_hit,
-                "path": path,
-                "window_seconds": ALERT_WINDOW_SECONDS,
-                "count": len(recent_blocks),
-            }
-        )
-
-    if rule_hit:
-        dq = recent_rule_hits[rule_hit]
-        dq.append(now_ts)
-        _cleanup_old_events(dq, now_ts)
-
-        if len(dq) >= RULE_ALERT_THRESHOLD:
-            trigger_webhook(
-                "RULE_HIT_SPIKE",
-                {
-                    "client_ip": client_ip,
-                    "rule_hit": rule_hit,
-                    "path": path,
-                    "window_seconds": ALERT_WINDOW_SECONDS,
-                    "count": len(dq),
-                }
-            )
+    LAST_ALERT_TIME[key] = now
+    return True
 
 
-def log_event(
-    request_id: str,
-    client_ip: str,
-    action: str,
-    rule_hit: str,
-    message: str,
-    upstream_status: int = None,
-    level: str = "info",
-    path: str = None,
-    method: str = None,
-    user_agent: str = None,
-    fingerprint: str = None,
-    surface: str = None,
-    decision: str = None,
-    dry_run_mode: bool = None,
-    latency_ms: float = None,
-):
-    payload = {
-        "timestamp": _now_iso(),
-        "request_id": request_id,
-        "client_ip": client_ip,
-        "action": action,              # PASSED / DETECTED / BLOCKED
-        "rule_hit": rule_hit,
-        "message": message,
-        "upstream_status": upstream_status,
-        "level": level,
-        "path": path,
-        "method": method,
-        "user_agent": user_agent,
-        "fingerprint": fingerprint,
-        "surface": surface,            # url/query/header/cookie/value/filename/metadata/anomaly/file/response
-        "decision": decision,          # allow/detect/block/mask/challenge/ban
-        "dry_run_mode": dry_run_mode,
-        "latency_ms": latency_ms,
-    }
+# =========================
+# SUMMARY DATA
+# =========================
+SUMMARY = {
+    "start": time.time(),
+    "ip_hits": defaultdict(int),
+    "rule_hits": defaultdict(int),
+    "blocked": 0,
+    "detected": 0,
+}
 
-    is_security_event = action in {"DETECTED", "BLOCKED"} or level in {"warning", "error"}
 
-    if is_security_event:
-        _write_json(security_logger, payload)
-    else:
-        _write_json(access_logger, payload)
+def update_summary(client_ip, rule_hit, action):
+    if client_ip:
+        SUMMARY["ip_hits"][client_ip] += 1
+
+    if rule_hit and rule_hit != "None":
+        SUMMARY["rule_hits"][rule_hit] += 1
 
     if action == "BLOCKED":
-        maybe_alert_on_block(client_ip, rule_hit, path)
+        SUMMARY["blocked"] += 1
+
+    elif action == "DETECTED":
+        SUMMARY["detected"] += 1
+
+def build_summary_text():
+    duration = int(time.time() - SUMMARY["start"])
+
+    top_ips = sorted(SUMMARY["ip_hits"].items(), key=lambda x: x[1], reverse=True)[:3]
+    top_rules = sorted(SUMMARY["rule_hits"].items(), key=lambda x: x[1], reverse=True)[:3]
+
+    text = f"📊 WAF Summary ({duration}s)\n\n"
+
+    text += "Top IP:\n"
+    for ip, count in top_ips:
+        text += f"- {ip}: {count}\n"
+
+    text += "\nTop Rule:\n"
+    for rule, count in top_rules:
+        text += f"- {rule}: {count}\n"
+
+    text += f"\nBlocked: {SUMMARY['blocked']}"
+    text += f"\nDetected: {SUMMARY['detected']}"
+
+    return text
 
 
-def log_admin_event(
-    request_id: str,
-    client_ip: str,
-    action: str,
-    message: str,
-    admin_path: str = None,
-    success: bool = True,
-):
-    payload = {
+def reset_summary():
+    SUMMARY["start"] = time.time()
+    SUMMARY["ip_hits"].clear()
+    SUMMARY["rule_hits"].clear()
+    SUMMARY["blocked"] = 0
+    SUMMARY["detected"] = 0
+
+
+# =========================
+# TELEGRAM POLLING (/stats)
+# =========================
+LAST_UPDATE_ID = 0
+
+
+def telegram_polling():
+    global LAST_UPDATE_ID
+    global SUMMARY_RUNTIME_ENABLED
+
+    if not TELEGRAM_ALERT_ENABLED:
+        return
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
+
+    try:
+        with httpx.Client(timeout=5) as client:
+            resp = client.get(url, params={"offset": LAST_UPDATE_ID + 1})
+            data = resp.json()
+
+        for update in data.get("result", []):
+            LAST_UPDATE_ID = update["update_id"]
+
+            msg = update.get("message", {})
+            text = msg.get("text", "").strip()
+            chat_id = str(msg.get("chat", {}).get("id", ""))
+
+            # chỉ nhận lệnh từ đúng chat_id của bạn
+            if chat_id != str(TELEGRAM_CHAT_ID):
+                continue
+
+            if text == "/stats":
+                send_telegram_alert(build_summary_text())
+
+            elif text == "/summary_on":
+                SUMMARY_RUNTIME_ENABLED = True
+                send_telegram_alert("✅ Đã bật WAF summary định kỳ")
+
+            elif text == "/summary_off":
+                SUMMARY_RUNTIME_ENABLED = False
+                send_telegram_alert("🔕 Đã tắt WAF summary định kỳ")
+
+            elif text.startswith("/ban "):
+                ip = text.split(" ", 1)[1].strip()
+                ban_ip(ip)
+                send_telegram_alert(f"🚫 Đã ban IP: {ip}")
+
+            elif text.startswith("/unban "):
+                ip = text.split(" ", 1)[1].strip()
+                unban_ip(ip)
+                send_telegram_alert(f"✅ Đã unban IP: {ip}")
+
+            elif text == "/bans":
+                banned = list_banned_ips()
+                if banned:
+                    send_telegram_alert("🚫 Banned IPs:\n" + "\n".join(banned))
+                else:
+                    send_telegram_alert("✅ Không có IP runtime nào đang bị ban")
+
+            elif text == "/help":
+                send_telegram_alert(
+                    "Mini-WAF commands:\n"
+                    "/stats - xem thống kê hiện tại\n"
+                    "/summary_on - bật summary định kỳ\n"
+                    "/summary_off - tắt summary định kỳ\n"
+                    "/ban <ip> - ban IP\n"
+                    "/unban <ip> - gỡ ban IP\n"
+                    "/bans - xem IP đang bị ban\n"
+                    "/help - xem lệnh"
+                )
+
+    except Exception as e:
+        print("[TELEGRAM POLL ERROR]", e)
+
+# =========================
+# BACKGROUND TASKS
+# =========================
+def start_background_tasks():
+    def summary_loop():
+        while True:
+            time.sleep(TELEGRAM_SUMMARY_INTERVAL)
+
+            if SUMMARY_RUNTIME_ENABLED:
+                send_telegram_alert(build_summary_text())
+                reset_summary()
+
+    def command_loop():
+        while True:
+            time.sleep(2)
+            telegram_polling()
+
+    threading.Thread(target=summary_loop, daemon=True).start()
+    threading.Thread(target=command_loop, daemon=True).start()
+
+# =========================
+# MAIN LOG FUNCTION
+# =========================
+def log_event(request_id, client_ip, action, rule_hit, message, **kwargs):
+    data = {
         "timestamp": _now_iso(),
         "request_id": request_id,
         "client_ip": client_ip,
         "action": action,
+        "rule_hit": rule_hit,
         "message": message,
-        "admin_path": admin_path,
-        "success": success,
-        "category": "admin_audit"
+        **kwargs
     }
 
-    _write_json(security_logger, payload)
+    # write log
+    _write_json(ACCESS_LOG, data)
 
-    if not success:
-        trigger_webhook(
-            "ADMIN_AUDIT_FAILURE",
-            {
-                "client_ip": client_ip,
-                "admin_path": admin_path,
-                "message": message,
-            }
-        )
+    if action in ["BLOCKED", "DETECTED"]:
+        _write_json(SECURITY_LOG, data)
 
+    update_summary(client_ip, rule_hit, action)
 
-def log_alert(request_id: str, client_ip: str, rule_hit: str, message: str, severity: str = "error", path: str = None):
-    payload = {
+    # ALERT logic
+    if action == "BLOCKED":
+        key = f"{client_ip}:{rule_hit}"
+
+        if should_alert(key):
+            send_telegram_alert(
+                f"🚨 BLOCKED\nIP: {client_ip}\nRule: {rule_hit}\nPath: {kwargs.get('path')}"
+            )
+
+def log_alert(request_id, client_ip, rule_hit, message, severity="error", path=None):
+    data = {
         "timestamp": _now_iso(),
         "request_id": request_id,
         "client_ip": client_ip,
+        "action": "ALERT",
         "rule_hit": rule_hit,
         "message": message,
         "severity": severity,
         "path": path,
-        "category": "explicit_alert"
     }
 
-    _write_json(security_logger, payload)
-    trigger_webhook(
-        "EXPLICIT_ALERT",
-        {
-            "client_ip": client_ip,
-            "rule_hit": rule_hit,
-            "message": message,
-            "severity": severity,
-            "path": path,
-        }
-    )
+    _write_json(SECURITY_LOG, data)
+    _write_json(INCIDENT_LOG, data)
+
+    key = f"alert:{rule_hit}:{client_ip}"
+
+    if should_alert(key):
+        send_telegram_alert(
+            f"🚨 WAF ALERT\n"
+            f"Severity: {severity}\n"
+            f"IP: {client_ip}\n"
+            f"Rule: {rule_hit}\n"
+            f"Path: {path}\n"
+            f"Message: {message}"
+        )

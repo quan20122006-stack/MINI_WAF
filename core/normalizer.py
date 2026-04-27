@@ -14,7 +14,7 @@ def normalize_payload(payload: str , max_url_decode_rounds: int = 3) -> str:
     
     #2. Unicode normaliztion
     #Giup cac ki tu nhin giong nhau va on dinh hon
-    normalized = unicodedata.normalize("NKFC",payload)
+    normalized = unicodedata.normalize("NFKC",payload)
 
     #3. html entity decode 
     normalized = html.unescape(normalized)

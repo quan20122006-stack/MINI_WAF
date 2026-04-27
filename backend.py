@@ -40,4 +40,4 @@ async def test_dlp():
     return "Đây là mã thẻ của tôi: 1234-5678-9012-3456. Xin đừng nói cho ai biết. Lỗi tại thư mục /var/www/html/app.py" 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000, ssl_keyfile="key.pem",ssl_certfile="cert.pem")
+    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)

@@ -20,10 +20,15 @@ from security.abuse_defense import (
     is_temporarily_banned,
     record_suspicious_behavior,
 )
+from utils.logger import start_background_tasks
 
 
 app = FastAPI(title="Mini-WAF")
 app.include_router(admin_router)
+
+@app.on_event("startup")
+async def startup():
+    start_background_tasks()
 
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
